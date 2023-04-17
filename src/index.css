@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+label {
+  @apply text-neutral-300 font-bold text-base
+}
+
+.input {
+  @apply w-full p-2 rounded-lg bg-white focus:ring-4 focus:outline-none focus:ring-blue-400;
+}
+
+.select {
+  @apply w-full p-2 rounded-lg focus:ring-4 focus:outline-none focus:ring-blue-400 text-black font-normal;
+}
+
+.button {
+  @apply bg-neutral-600 text-white p-2 rounded-lg font-bold relative hover:bg-neutral-500;
+}
+
+.button-white {
+  @apply bg-white text-black p-2 rounded-lg font-bold relative hover:bg-neutral-300;
+}
