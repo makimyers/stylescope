@@ -11,6 +11,9 @@ import { useFontFamily } from './hooks/useFontFamily';
 import FontFamilyOptions from './components/FontFamilyOptions';
 import generateFontFamilyStyle from './utils/generateFontFamilyStyle';
 
+import MonacoEditor from 'react-monaco-editor';
+
+
 // Define the props for StyleScope component
 interface StyleScopeProps { }
 
@@ -304,6 +307,95 @@ const StyleScope: React.FC<StyleScopeProps> = () => {
         }
     };
 
+    // Generate the tailwind.config.js file
+    type ColorsObjectType = {
+        [key: string]: string;
+    };
+
+    type FontSizeLineHeightType = {
+        [key: string]: [string, { lineHeight: string }];
+    };
+
+    const sortKeys = (a: string, b: string) => {
+        const order = [
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "text-2xl",
+            "text-xl",
+            "text-lg",
+            "text-base",
+            "text-sm",
+            "text-xs",
+        ];
+        return order.indexOf(a) - order.indexOf(b);
+    };
+
+    const generateTailwindConfig = () => {
+        const colorsObject: ColorsObjectType = colors.reduce(
+            (acc: ColorsObjectType, color: ColorObject) => {
+                acc[color.name] = color.value;
+                return acc;
+            },
+            {}
+        );
+
+        const fontFamilyObject = {
+            heading: [headingFont, "serif"],
+            body: [bodyFont, "sans-serif"],
+        };
+
+        const screensObject = {
+            "2xl": `${containerWidth}px`,
+        };
+
+        const fontSizeObject: FontSizeLineHeightType = Object.keys(fontSize)
+            .sort(sortKeys)
+            .reduce((acc: FontSizeLineHeightType, key: string) => {
+                acc[`mobile-${key}`] = [
+                    `${fontSize[key as keyof typeof fontSize].mobile}px`,
+                    {
+                        lineHeight: `${lineHeight[key as keyof typeof lineHeight].mobile}`,
+                    },
+                ];
+                return acc;
+            }, {});
+
+        const fontSizeDesktopObject: FontSizeLineHeightType = Object.keys(fontSize)
+            .sort(sortKeys)
+            .reduce((acc: FontSizeLineHeightType, key: string) => {
+                acc[`desktop-${key}`] = [
+                    `${fontSize[key as keyof typeof fontSize].desktop}px`,
+                    {
+                        lineHeight: `${lineHeight[key as keyof typeof lineHeight].desktop}`,
+                    },
+                ];
+                return acc;
+            }, {});
+
+        const tailwindConfig = `module.exports = {
+          content: ['./src/**/*.{html,js}'],
+          theme: {
+            colors: ${JSON.stringify(colorsObject, null, 2)},
+            fontFamily: ${JSON.stringify(fontFamilyObject, null, 2)},
+            extend: {
+              screens: ${JSON.stringify(screensObject, null, 2)},
+              fontSize: {
+                ${JSON.stringify(fontSizeObject, null, 2).slice(1, -1)},
+                ${JSON.stringify(fontSizeDesktopObject, null, 2).slice(1, -1)},
+              },
+            },
+          },
+        }`;
+
+        return tailwindConfig;
+    };
+
+    // Generate the Tailwind config
+    const tailwindConfig = generateTailwindConfig();
+
     // Render the StyleScope component
     return (
         <>
@@ -316,7 +408,7 @@ const StyleScope: React.FC<StyleScopeProps> = () => {
             </button>
 
             {visible && (
-                <div ref={formRef} className="fixed right-0 top-0 bottom-0 right-0 max-w-[400px] h-full overflow-scroll p-6 bg-black z-40">
+                <div ref={formRef} className="fixed right-0 top-0 bottom-0 max-w-[400px] h-full overflow-scroll p-6 bg-black z-40">
                     <button className="toggle-2 !fixed right-10 top-10 h-16 w-16 rounded-full text-white bg-white flex items-center justify-center z-50 border-black border-4" onClick={toggleVisibility}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 text-black">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -607,11 +699,20 @@ const StyleScope: React.FC<StyleScopeProps> = () => {
                             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Arcu cursus euismod quis viverra nibh cras. Accumsan lacus vel facilisis volutpat est velit egestas dui. Dignissim cras tincidunt lobortis feugiat vivamus at augue eget. Euismod quis viverra nibh cras pulvinar mattis nunc sed. Auctor urna nunc id cursus. Pulvinar etiam non quam lacus suspendisse faucibus. Augue mauris augue neque gravida in fermentum et sollicitudin ac. Neque aliquam vestibulum morbi blandit. Orci sagittis eu volutpat odio. Iaculis eu non diam phasellus vestibulum lorem sed risus ultricies.
                         </p>
                         <p style={generateFontFamilyStyle(fontSize, lineHeight, 'text-base', 'text-base', bodyFont)}>
-                        Phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec sagittis. Curabitur gravida arcu ac tortor dignissim convallis aenean et. Sed enim ut sem viverra. Ullamcorper dignissim cras tincidunt lobortis feugiat vivamus at augue. Condimentum id venenatis a condimentum. 
+                            Phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec sagittis. Curabitur gravida arcu ac tortor dignissim convallis aenean et. Sed enim ut sem viverra. Ullamcorper dignissim cras tincidunt lobortis feugiat vivamus at augue. Condimentum id venenatis a condimentum.
                         </p>
                     </div>
                 </div>
             </div>
+
+            <MonacoEditor
+                language="javascript"
+                theme="vs-dark"
+                value={tailwindConfig}
+                options={{ readOnly: true }}
+                height="50vh"
+            />
+
         </>
     );
 };
